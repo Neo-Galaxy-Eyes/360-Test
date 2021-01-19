@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About comments</title>
+    <!-- 引入vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+</head>
+<body>
+    <div id="app"> 
+        <h3> Write your comment</h3>
+        <!-- 编写评论 -->
+        <textarea v-model="text" style="height: 50px;width: 300px;"></textarea>
+        <br>
+        <!-- 点击添加评论 -->
+        <button  @click="addComment()">添加评论</button>
+        <hr>
+        <!-- 通过v-for循环，将写过的评论展示出来 -->
+        <div v-for="item in comments">
+            <!-- 这部分可以用来记录用户名，目前先以序号的形式占位 -->
+            <span>user{{item.id}}</span>
+            <!-- 传入具体id值，可以控制指定的评论进行展开 -->
+            <button @click="showComments(item.id)">展开折叠</button>
+            <!-- 使用v-show来更改评论展开的状态 -->
+            <div v-show="item.isFold">
+                <!-- 评论内容 -->
+                <h3>{{item.content}}</h3>
+                <!-- 传入具体id值，可以控制出现回复输入框和回复内容 -->
+                <button @click="showReplyContent(item.id)">添加回复</button>
+                <!-- 使用v-show来更改回复展开的状态 -->
+                <div v-show="item.isReply">
+                    <!-- 输入框 -->
+                    <input type="text" v-model="item.replyInput">
+                    <!-- 提交按钮 -->
+                    <button @click="submitReply(item.id)">提交回复</button>
+                </div>
+                <!-- 使用v-for循环来展示多条回复内容 -->
+                <h5 v-for="subItem in item.replyContent">
+                    {{subItem}}
+                </h5>
+            </div>
+            <hr>
+        </div>
+        
+    </div>
+    
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                //评论的内容
+                text:'',
+                //评论的顺序
+                count:0,
+                //用来记录评论的内容、序号、是否展开评论内容和多条回复内容
+                comments:[
+                // {
+                //     content:"the origin content",
+                //     id:0,
+                //     isFold:false,
+                //     isReply:false,
+                //     replyContent:['233'],
+                //     replyInput:''
+                // }
+                ]
+            },
+            methods:{
+                //添加评论的逻辑
+                addComment(){
+                    //如果用户直接添加，则按“无内容”处理
+                    if(!this.text){
+                        this.text = "No Content";
+                    }
+                    //用来插入数组的对象
+                    let obj = {};
+                    obj.content = this.text;
+                    obj.id = ++this.count;
+                    obj.isFold = false;
+                    obj.isReply = false;
+                    obj.replyContent = [];
+                    replyInput = '';
+                    this.comments.push(obj);
+                    //将数据保存在本地存储里面，下同
+                    window.sessionStorage.setItem("comment",JSON.stringify(this.comments));
+                    //记录评论完成后，将输入框清空
+                    this.text = "";
+                },
+                //展开被折叠评论的逻辑
+                showComments(id){
+                    //筛选出当前所要展开内容的评论对象，下同
+                    let item = this.comments.filter(x=>{
+                        return x.id == id
+                    })[0];
+                    //布尔值取反，使展开生效，下同
+                    item.isFold = !item.isFold;
+                    //同时保存当前状态，下一次刷新的时候依然是当前状态，下同
+                    window.sessionStorage.setItem("comment",JSON.stringify(this.comments));
+                },
+                //展示回复内容的逻辑
+                showReplyContent(id){
+                    let item = this.comments.filter(x=>{
+                        return x.id == id
+                    })[0];
+                    item.isReply = !item.isReply;
+                    window.sessionStorage.setItem("comment",JSON.stringify(this.comments));
+                },
+                //提交多条回复的逻辑
+                submitReply(id){
+                    let item = this.comments.filter(x=>{
+                        return x.id == id
+                    })[0];
+                    item.replyContent.push(item.replyInput);
+                    item.replyInput = "";
+                    item.isReply = false;
+                    window.sessionStorage.setItem("comment",JSON.stringify(this.comments));
+                },
+            },
+            created(){
+                //最开始的时候从本地存储里面获取评论数据，如果没有，就新建一个数组，反之进行赋值
+                if(JSON.parse(window.sessionStorage.getItem("comment")) == null){
+                    this.comments = [];
+                }else{
+                    this.comments = JSON.parse(window.sessionStorage.getItem("comment"));
+                    //避免id值重新从0开始计算
+                    this.count = this.comments[this.comments.length-1].id;
+                }           
+            },       
+        })
+    </script>
+</body>
+</html>
